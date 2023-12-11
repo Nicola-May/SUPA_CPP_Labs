@@ -53,6 +53,7 @@ private:
   };
 
 // Adding the normal distribution 
+ 
   class NormalDistribution : public FiniteFunction {
 public:
     NormalDistribution(double mu, double sigma);

@@ -149,6 +149,7 @@ double NegativeCrystalBallDistribution::callFunction(double x) {
 //Helper functions 
 ###################
 */
+
 // Generate paths from user defined stem
 void FiniteFunction::checkPath(std::string outfile){
  path fp = outfile;

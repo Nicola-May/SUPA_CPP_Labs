@@ -99,7 +99,6 @@ if (T < A) {
     x_i = y; // accept y ad update x_i (5)
     acceptedSamples.push_back(y); // save the accepted sample
 }
-
 }
 
 // plot normal distribution function 
