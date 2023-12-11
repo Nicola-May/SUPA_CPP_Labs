@@ -1,3 +1,5 @@
+//FiniteFunctions.h
+
 #include <string>
 #include <vector>
 #include "gnuplot-iostream.h"
@@ -46,4 +48,45 @@ protected:
   
 private:
   double invxsquared(double x); //The default functional form
+
+
+  };
+
+// Adding the normal distribution 
+  class NormalDistribution : public FiniteFunction {
+public:
+    NormalDistribution(double mu, double sigma);
+    double generateRandom(double mean, double stdDev);
+    virtual double callFunction(double x) override;
+
+private:
+    double m_mu;   // Mean
+    double m_sigma; // Standard deviation
 };
+
+
+// Adding the CauchyLorentz distribution
+class CauchyLorentzDistribution : public FiniteFunction {
+public:
+    CauchyLorentzDistribution(double x0, double gamma);
+    virtual double callFunction(double x) override;
+
+private:
+    double m_x0;   // Location parameter
+    double m_gamma; // Scale parameter
+};
+
+// Adding the negative cystal ball distribution
+class NegativeCrystalBallDistribution : public FiniteFunction {
+public:
+    NegativeCrystalBallDistribution(double alpha, double n, double x_bar, double sigma);
+    virtual double callFunction(double x) override;
+
+private:
+    double m_alpha;
+    double m_n;
+    double m_x_bar;
+    double m_sigma;
+};
+
+

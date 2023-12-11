@@ -1,6 +1,10 @@
+//FiniteFunctions.cxx
+
 #include <iostream>
+#include <cmath>
 #include <string>
 #include <vector>
+#include <random>
 #include "FiniteFunctions.h"
 #include <filesystem> //To check extensions in a nice way
 
@@ -13,14 +17,14 @@ FiniteFunction::FiniteFunction(){
   m_RMin = -5.0;
   m_RMax = 5.0;
   this->checkPath("DefaultFunction");
-  m_Integral = NULL;
+  m_Integral = 0.0;
 }
 
 //initialised constructor
 FiniteFunction::FiniteFunction(double range_min, double range_max, std::string outfile){
   m_RMin = range_min;
   m_RMax = range_max;
-  m_Integral = NULL;
+  m_Integral = 0.0;
   this->checkPath(outfile); //Use provided string to name output files
 }
 
@@ -61,22 +65,84 @@ double FiniteFunction::callFunction(double x) {return this->invxsquared(x);}; //
 Integration by hand (output needed to normalise function when plotting)
 ###################
 */ 
-double FiniteFunction::integrate(int Ndiv){ //private
-  //ToDo write an integrator
-  return -99;  
+double FiniteFunction::integrate(int Ndiv) { // private
+  double h = (m_RMax - m_RMin) / static_cast<double>(Ndiv); // width of each division
+  double sum = 0.5 * (callFunction(m_RMin) + callFunction(m_RMax)); // initialize sum with the first and last function values
+
+  for (int i = 1; i < Ndiv; ++i) {
+    double x = m_RMin + i * h;
+    sum += callFunction(x);
+  }
+
+  return sum * h;
 }
 double FiniteFunction::integral(int Ndiv) { //public
   if (Ndiv <= 0){
     std::cout << "Invalid number of divisions for integral, setting Ndiv to 1000" <<std::endl;
     Ndiv = 1000;
   }
-  if (m_Integral == NULL || Ndiv != m_IntDiv){
+  if (m_Integral == 0.0 || Ndiv != m_IntDiv){
     m_IntDiv = Ndiv;
     m_Integral = this->integrate(Ndiv);
     return m_Integral;
   }
   else return m_Integral; //Don't bother re-calculating integral if Ndiv is the same as the last call
 }
+
+
+// NORMAL DISTRIBUTION 
+
+NormalDistribution::NormalDistribution(double mu, double sigma)
+    : FiniteFunction(), m_mu(mu), m_sigma(sigma) {
+    // You can add more initialization here if needed
+}
+
+double NormalDistribution::callFunction(double x) {
+    double coeff = 1 / (m_sigma * sqrt(2 * M_PI));
+    double exponent = -0.5 * pow((x - m_mu) / m_sigma, 2);
+    return coeff * exp(exponent);
+}
+
+// Implementation of the generateRandom method for the NormalDistribution class
+double NormalDistribution::generateRandom(double mean, double stdDev) {
+    std::random_device rd;
+    std::mt19937 eng(rd());
+    std::normal_distribution<> distr(mean, stdDev);
+    return distr(eng);
+}
+
+// CAUCHY-LORENTZ DISTRIBUTION
+
+CauchyLorentzDistribution::CauchyLorentzDistribution(double x0, double gamma)
+    : FiniteFunction(), m_x0(x0), m_gamma(gamma) {
+    // Additional initialization can be added here
+}
+
+double CauchyLorentzDistribution::callFunction(double x) {
+    return 1 / (M_PI * m_gamma * (1 + pow((x - m_x0) / m_gamma, 2)));
+}
+
+// NEGATIVE CRYSTAL BALL
+NegativeCrystalBallDistribution::NegativeCrystalBallDistribution(double alpha, double n, double x_bar, double sigma)
+    : FiniteFunction(), m_alpha(alpha), m_n(n), m_x_bar(x_bar), m_sigma(sigma) {
+}
+
+double NegativeCrystalBallDistribution::callFunction(double x) {
+    double A = (m_n / fabs(m_alpha)) * exp(-pow(m_alpha, 2) / 2);
+    double B = (m_n / fabs(m_alpha)) - fabs(m_alpha);
+    double C = (m_n / fabs(m_alpha)) * (1 / (m_n - 1)) * exp(-pow(m_alpha, 2) / 2);
+    double D = M_PI / 2 * (1 + erf(fabs(m_alpha) / sqrt(2)));
+    double N = 1 / (m_sigma * (C + D));
+
+    double xMinusXbarOverSigma = (x - m_x_bar) / m_sigma;
+
+    if (xMinusXbarOverSigma > -m_alpha) {
+        return N * exp(-pow(xMinusXbarOverSigma, 2) / 2);
+    } else {
+        return N * A * pow(B - xMinusXbarOverSigma, -m_n);
+    }
+}
+
 
 /*
 ###################
@@ -98,6 +164,7 @@ void FiniteFunction::printInfo(){
   std::cout << "integral: " << m_Integral << ", calculated using " << m_IntDiv << " divisions" << std::endl;
   std::cout << "function: " << m_FunctionName << std::endl;
 }
+
 
 /*
 ###################
@@ -140,7 +207,7 @@ std::vector< std::pair<double,double> > FiniteFunction::scanFunction(int Nscan){
   double step = (m_RMax - m_RMin)/(double)Nscan;
   double x = m_RMin;
   //We use the integral to normalise the function points
-  if (m_Integral == NULL) {
+  if (m_Integral == 0.0) {
     std::cout << "Integral not set, doing it now" << std::endl;
     this->integral(Nscan);
     std::cout << "integral: " << m_Integral << ", calculated using " << Nscan << " divisions" << std::endl;
@@ -180,58 +247,55 @@ std::vector< std::pair<double,double> > FiniteFunction::makeHist(std::vector<dou
 //Function which handles generating the gnuplot output, called in destructor
 //If an m_plot... flag is set, the we must have filled the related data vector
 //SUPACPP note: They syntax of the plotting code is not part of the course
-void FiniteFunction::generatePlot(Gnuplot &gp){
-
-  if (m_plotfunction==true && m_plotdatapoints==true && m_plotsamplepoints==true){
-    gp << "set terminal pngcairo\n";
-    gp << "set output 'Outputs/png/"<<m_FunctionName<<".png'\n"; 
-    gp << "set xrange ["<<m_RMin<<":"<<m_RMax<<"]\n";
-    gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
-    gp << "plot '-' with linespoints ls 1 title '"<<m_FunctionName<<"', '-' with points ps 2 lc rgb 'blue' title 'sampled data', '-' with points ps 1 lc rgb 'black' pt 7 title 'data'\n";
-    gp.send1d(m_function_scan);
-    gp.send1d(m_samples);
-    gp.send1d(m_data);
-  }
-  else if (m_plotfunction==true && m_plotdatapoints==true){
-    gp << "set terminal pngcairo\n";
-    gp << "set output 'Outputs/png/"<<m_FunctionName<<".png'\n"; 
-    gp << "set xrange ["<<m_RMin<<":"<<m_RMax<<"]\n";
-    gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
-    gp << "plot '-' with linespoints ls 1 title '"<<m_FunctionName<<"', '-' with points ps 1 lc rgb 'black' pt 7 title 'data'\n";
-    gp.send1d(m_function_scan);
-    gp.send1d(m_data);
-  }
-  else if (m_plotfunction==true && m_plotsamplepoints==true){
-    gp << "set terminal pngcairo\n";
-    gp << "set output 'Outputs/png/"<<m_FunctionName<<".png'\n"; 
-    gp << "set xrange ["<<m_RMin<<":"<<m_RMax<<"]\n";
-    gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
-    gp << "plot '-' with linespoints ls 1 title '"<<m_FunctionName<<"', '-' with points ps 2 lc rgb 'blue' title 'sampled data'\n";
-    gp.send1d(m_function_scan);
-    gp.send1d(m_samples);
-  }
-  else if (m_plotfunction==true){
-    gp << "set terminal pngcairo\n";
-    gp << "set output 'Outputs/png/"<<m_FunctionName<<".png'\n"; 
-    gp << "set xrange ["<<m_RMin<<":"<<m_RMax<<"]\n";
-    gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
-    gp << "plot '-' with linespoints ls 1 title 'function'\n";
-    gp.send1d(m_function_scan);
-  }
-
-  else if (m_plotdatapoints == true){
-    gp << "set terminal pngcairo\n";
-    gp << "set output 'Outputs/png/"<<m_FunctionName<<".png'\n"; 
-    gp << "set xrange ["<<m_RMin<<":"<<m_RMax<<"]\n";
-    gp << "plot '-' with points ps 1 lc rgb 'black' pt 7 title 'data'\n";
-    gp.send1d(m_data);
-  }
-
-  else if (m_plotsamplepoints == true){
-    gp << "set terminal pngcairo\n";
-    gp << "set output 'Outputs/png/"<<m_FunctionName<<".png'\n"; 
-    gp << "set xrange ["<<m_RMin<<":"<<m_RMax<<"]\n";
-    gp << "plot '-' with points ps 2 lc rgb 'blue' title 'sampled data'\n";
-    gp.send1d(m_samples);
-  }
+void FiniteFunction::generatePlot(Gnuplot &gp) {
+    if (m_plotfunction == true && m_plotdatapoints == true && m_plotsamplepoints == true) {
+        gp << "set terminal pngcairo\n";
+        gp << "set output 'Outputs/png/" << m_FunctionName << ".png'\n";
+        gp << "set xrange [" << m_RMin << ":" << m_RMax << "]\n";
+        gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
+        gp << "plot '-' with linespoints ls 1 title '" << m_FunctionName << "', "
+              "'-' with points ps 2 lc rgb 'blue' title 'sampled data', "
+              "'-' with points ps 1 lc rgb 'black' pt 7 title 'data'\n";
+        gp.send1d(m_function_scan);
+        gp.send1d(m_samples);
+        gp.send1d(m_data);
+    } else if (m_plotfunction == true && m_plotdatapoints == true) {
+        gp << "set terminal pngcairo\n";
+        gp << "set output 'Outputs/png/" << m_FunctionName << ".png'\n";
+        gp << "set xrange [" << m_RMin << ":" << m_RMax << "]\n";
+        gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
+        gp << "plot '-' with linespoints ls 1 title '" << m_FunctionName << "', "
+              "'-' with points ps 1 lc rgb 'black' pt 7 title 'data'\n";
+        gp.send1d(m_function_scan);
+        gp.send1d(m_data);
+    } else if (m_plotfunction == true && m_plotsamplepoints == true) {
+        gp << "set terminal pngcairo\n";
+        gp << "set output 'Outputs/png/" << m_FunctionName << ".png'\n";
+        gp << "set xrange [" << m_RMin << ":" << m_RMax << "]\n";
+        gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
+        gp << "plot '-' with linespoints ls 1 title '" << m_FunctionName << "', "
+              "'-' with points ps 2 lc rgb 'blue' title 'sampled data'\n";
+        gp.send1d(m_function_scan);
+        gp.send1d(m_samples);
+    } else if (m_plotfunction == true) {
+        gp << "set terminal pngcairo\n";
+        gp << "set output 'Outputs/png/" << m_FunctionName << ".png'\n";
+        gp << "set xrange [" << m_RMin << ":" << m_RMax << "]\n";
+        gp << "set style line 1 lt 1 lw 2 pi 1 ps 0\n";
+        gp << "plot '-' with linespoints ls 1 title 'function'\n";
+        gp.send1d(m_function_scan);
+    } else if (m_plotdatapoints == true) {
+        gp << "set terminal pngcairo\n";
+        gp << "set output 'Outputs/png/" << m_FunctionName << ".png'\n";
+        gp << "set xrange [" << m_RMin << ":" << m_RMax << "]\n";
+        gp << "plot '-' with points ps 1 lc rgb 'black' pt 7 title 'data'\n";
+        gp.send1d(m_data);
+    } else if (m_plotsamplepoints == true) {
+        gp << "set terminal pngcairo\n";
+        gp << "set output 'Outputs/png/" << m_FunctionName << ".png'\n";
+        gp << "set xrange [" << m_RMin << ":" << m_RMax << "]\n";
+        gp << "plot '-' with points ps 2 lc rgb 'blue' title 'sampled data'\n";
+        gp.send1d(m_samples);
+    }
 }
+
