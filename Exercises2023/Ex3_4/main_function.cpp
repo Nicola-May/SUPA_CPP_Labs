@@ -1,4 +1,4 @@
- // Nicola Agnew
+ // Nicola Agnew 
  // Nicola.agnew@strath.ac.uk
  
  // g++ main_function.cpp FiniteFunctions.cxx -o main_function -lboost_iostreams
