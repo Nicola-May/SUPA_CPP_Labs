@@ -1,8 +1,8 @@
- // Nicola Agnew 
+ // Nicola Agnew
  // Nicola.agnew@strath.ac.uk
- 
+
  // g++ main_function.cpp FiniteFunctions.cxx -o main_function -lboost_iostreams
- // ./main_function
+ // ./main_function 
 
  // I have had to edit the FiniteFunctions plotting functions as the original version
  // does not display the plots. Now in saves plot as .png in outputs folder 

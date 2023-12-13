@@ -1,4 +1,4 @@
-//FiniteFunctions.h  
+//FiniteFunctions.h
 
 #include <string>
 #include <vector>

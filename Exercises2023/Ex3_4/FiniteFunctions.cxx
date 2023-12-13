@@ -1,4 +1,4 @@
-//FiniteFunctions.cxx 
+//FiniteFunctions.cxx
 
 #include <iostream>
 #include <cmath>
