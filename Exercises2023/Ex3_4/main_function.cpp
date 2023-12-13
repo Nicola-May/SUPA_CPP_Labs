@@ -5,7 +5,14 @@
  // ./main_function
 
  // I have had to edit the FiniteFunctions plotting functions as the original version
- // does not display the plots. Now in saves plots as pngs in outputs folder 
+ // does not display the plots. Now in saves plot as .png in outputs folder 
+
+ // I am having issue with creating mulpiple plots as once. My current (non- optimal) method is to 
+ // comment out the plots that I am not evaluating at the time and recomplile for each plot seperately. 
+ // This means you wont see all the results by just running this code. There is a plot 
+ // for the defualt function + data, normal + data, lorentz + data, neg crystal ball +
+ // data and function+pseudo random generated data.
+
 
 #include <iostream>
 #include <fstream>
@@ -39,9 +46,9 @@ int main() {
     inputFile.close();
 
     // Create an instance of FiniteFunction (Does NOT fit data)
-    FiniteFunction function{};
-    function.plotFunction();
-    function.plotData(MysteryValues, 100, true);
+    //FiniteFunction function{};
+    //function.plotFunction();
+    //function.plotData(MysteryValues, 100, true);
 
     // Create and test NormalDistribution (Does fit data)
     NormalDistribution normalDist(-1, 2); // mean , standard deviation 
@@ -50,18 +57,18 @@ int main() {
 
     // Create and test CauchyLorentzDistribution (Does NOT fit data)
     CauchyLorentzDistribution cauchyDist(-1, 2); // x0 , gamma
-    cauchyDist.plotFunction();
-    cauchyDist.plotData(MysteryValues, 100, true);
+    //cauchyDist.plotFunction();
+    //cauchyDist.plotData(MysteryValues, 100, true);
 
     // create and test NegativeCrystalBallDistribution (does fit data) 
     NegativeCrystalBallDistribution crystalBallDist(2, 2, -1, 2); // alpha , n , x_bar , sigma 
-    crystalBallDist.plotFunction();
-    crystalBallDist.plotData(MysteryValues, 100, true);
+    //crystalBallDist.plotFunction();
+    //crystalBallDist.plotData(MysteryValues, 100, true);
 
 // PART 2: Metropolis algorithm 
 
 // Create an new instance of NormalDistribution (1)
-NormalDistribution normalDist_2(0, 2); 
+NormalDistribution normalDist_2(-1, 2); 
 
 // Generate x_i
 // Random number generator initialization
@@ -102,9 +109,9 @@ if (T < A) {
 }
 
 // plot normal distribution function 
-normalDist_2.plotFunction();
+//normalDist_2.plotFunction();
 // plot pseudo random data 
-normalDist_2.plotData(acceptedSamples, 100, true);
+//normalDist_2.plotData(acceptedSamples, 100, true);
 
     // End the main function 
     return 0;

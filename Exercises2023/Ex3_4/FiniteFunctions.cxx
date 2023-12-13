@@ -86,7 +86,7 @@ double FiniteFunction::integral(int Ndiv) { //public
     m_Integral = this->integrate(Ndiv);
     return m_Integral;
   }
-  else return m_Integral; //Don't bother re-calculating integral if Ndiv is the same as the last call
+  else return m_Integral; 
 }
 
 
@@ -94,7 +94,7 @@ double FiniteFunction::integral(int Ndiv) { //public
 
 NormalDistribution::NormalDistribution(double mu, double sigma)
     : FiniteFunction(), m_mu(mu), m_sigma(sigma) {
-    // You can add more initialization here if needed
+
 }
 
 double NormalDistribution::callFunction(double x) {
@@ -115,7 +115,6 @@ double NormalDistribution::generateRandom(double mean, double stdDev) {
 
 CauchyLorentzDistribution::CauchyLorentzDistribution(double x0, double gamma)
     : FiniteFunction(), m_x0(x0), m_gamma(gamma) {
-    // Additional initialization can be added here
 }
 
 double CauchyLorentzDistribution::callFunction(double x) {
